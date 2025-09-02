@@ -5,6 +5,7 @@ namespace Bizhub\Ember;
 use Bizhub\Ember\Chat\ChatManager;
 use Bizhub\Ember\Embedding\EmbeddingManager;
 use Bizhub\Ember\Memory\MemoryManager;
+use Bizhub\Ember\Memory\QdrantClient;
 use Bizhub\Ember\Search\SearchManager;
 
 class Ember
@@ -21,7 +22,9 @@ class Ember
 
     public static function search(): SearchManager
     {
-        return new SearchManager;
+        return new SearchManager(
+            client: new QdrantClient,
+        );
     }
 
     public static function chat(): ChatManager

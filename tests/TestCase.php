@@ -3,7 +3,7 @@
 namespace Bizhub\Ember\Tests;
 
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use Bizhub\Ember\Providers\EmberServiceProvider;
+use Bizhub\Ember\EmberServiceProvider;
 
 class TestCase extends OrchestraTestCase
 {

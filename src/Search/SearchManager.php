@@ -2,18 +2,25 @@
 
 namespace Bizhub\Ember\Search;
 
+use Bizhub\Ember\Memory\QdrantClient;
+
 class SearchManager
 {
-    public function similar(array $vector): array
+    public function __construct(
+        protected QdrantClient $client,
+    ) {}
+
+    public function similar(array $vector, int $top = 5): array
     {
-        $client = new Client;
+        $response = $this->client->post(
+            path: '/collections/pdf_chunks/points/search',
+            data: [
+                'vector' => $vector,
+                'top' => $top,
+                'with_payload' => true,
+            ]
+        );
 
-        $searchResponse = $client->post('/collections/pdf_chunks/points/search', [
-            'vector' => $vector,
-            'top' => 5,
-            'with_payload' => true,
-        ]);
-
-        return $searchResponse->json()['result'];
+        return $response['result'] ?? [];
     }
 }
