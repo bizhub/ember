@@ -16,7 +16,7 @@ class TestCase extends OrchestraTestCase
 
     protected function getEnvironmentSetUp($app)
     {
-        $app['config']->set('ember.prism_api_key', 'test-key');
-        $app['config']->set('ember.default_model', 'gpt-4');
+        // $app['config']->set('ember.', 'test-key');
+        // $app['config']->set('ember.', 'gpt-4');
     }
 }

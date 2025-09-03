@@ -18,7 +18,7 @@ class SearchManager
                 'vector' => $vector,
                 'top' => $top,
                 'with_payload' => true,
-            ]
+            ],
         );
 
         return $response['result'] ?? [];

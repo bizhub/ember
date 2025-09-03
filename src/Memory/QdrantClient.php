@@ -11,8 +11,8 @@ class QdrantClient
 
     public function __construct(string $baseUrl = null, string $apiKey = null)
     {
-        $this->baseUrl = $baseUrl ?? config('ember.vector_db_url', 'http://localhost:6333');
-        $this->apiKey = $apiKey ?? config('ember.vector_db_api_key');
+        $this->baseUrl = $baseUrl ?? config('ember.qdrant_host', 'http://localhost:6333');
+        $this->apiKey = $apiKey ?? config('ember.qdrant_api_key');
     }
 
     protected function request(string $method, string $path, array $data = []): array

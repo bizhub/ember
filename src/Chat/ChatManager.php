@@ -13,7 +13,7 @@ use Ramsey\Uuid\Uuid;
 
 class ChatManager
 {
-    protected ?string $systemPrompt = null;
+    protected $systemPrompt;
     protected ?int $userId = null;
     protected array $tools = [];
     protected ?string $conversationId = null;
@@ -23,27 +23,54 @@ class ChatManager
         protected SearchManager $search,
     ) {}
 
-    public function withSystemPrompt(string $prompt): self
+    public function withSystemPrompt(string|callable $prompt): self
     {
         $this->systemPrompt = $prompt;
+
         return $this;
+    }
+
+    protected function resolveSystemPrompt(string $context, array $history = []): string
+    {
+        if (is_callable($this->systemPrompt)) {
+            $systemPrompt = (string) call_user_func($this->systemPrompt, $context);
+        } elseif ($this->systemPrompt) {
+            $systemPrompt = str_replace(
+                '{context}',
+                $context ?: 'No relevant knowledge found.',
+                $this->systemPrompt
+            );
+        } else {
+            $systemPrompt = $context ?: 'No relevant knowledge found.';
+        }
+
+        if ($history) {
+            $systemPrompt .= "\nUse the conversation history:\n<conversation>"
+                . implode("\n", $history)
+                . "</conversation>";
+        }
+
+        return $systemPrompt;
     }
 
     public function forUser($user): self
     {
         $this->userId = $user->id ?? $user;
+
         return $this;
     }
 
     public function withTools(array $tools): self
     {
         $this->tools = $tools;
+
         return $this;
     }
 
     public function forConversation(?string $conversationId): self
     {
         $this->conversationId = $conversationId;
+
         return $this;
     }
     
@@ -76,20 +103,21 @@ class ChatManager
             $contextText .= $summary . "\n\n";
         }
 
-        $systemPrompt = $this->systemPrompt
-            ? str_replace('{context}', $contextText ?: 'No relevant knowledge found.', $this->systemPrompt)
-            : $contextText;
-
-        $messagesHistory = $conversationMessages
+        $history = $conversationMessages
             ->take(-6)
             ->map(fn($msg) => ($msg->role === ConversationRole::User ? 'User: ' : 'Assistant: ') . $msg->content)
             ->toArray();
 
-        if ($messagesHistory) {
-            $systemPrompt .= "\nUse the conversation history:\n<conversation>"
-                . implode("\n", $messagesHistory)
-                . "</conversation>";
-        }
+        $output = Prism::text()
+            ->using(Provider::Gemini, 'gemini-2.0-flash')
+            ->withTools($this->tools)
+            ->withMaxSteps(2)
+            ->usingTemperature(0)
+            ->withSystemPrompt(
+                $this->resolveSystemPrompt($contextText, $history),
+            )
+            ->withPrompt($question)
+            ->asText();
 
         ConversationMessage::create([
             'user_id' => $this->userId,
@@ -97,15 +125,6 @@ class ChatManager
             'role' => ConversationRole::User,
             'content' => $question,
         ]);
-
-        $output = Prism::text()
-            ->using(Provider::Gemini, 'gemini-2.0-flash')
-            ->withTools($this->tools)
-            ->withMaxSteps(2)
-            ->usingTemperature(0)
-            ->withSystemPrompt($systemPrompt)
-            ->withPrompt($question)
-            ->asText();
 
         ConversationMessage::create([
             'user_id' => $this->userId,

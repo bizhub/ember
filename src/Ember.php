@@ -17,7 +17,9 @@ class Ember
 
     public static function memory(): MemoryManager
     {
-        return new MemoryManager;
+        return new MemoryManager(
+            client: new QdrantClient,
+        );
     }
 
     public static function search(): SearchManager

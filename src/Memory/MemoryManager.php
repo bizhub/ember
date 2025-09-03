@@ -2,6 +2,7 @@
 
 namespace Bizhub\Ember\Memory;
 
+use Domain\Ember\Jobs\ProcessSummarizedChunkJob;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Prism;
 use Prism\Prism\Schema\ArraySchema;
@@ -10,6 +11,12 @@ use Prism\Prism\Schema\StringSchema;
 
 class MemoryManager
 {
+    public function __construct(
+        protected ?QdrantClient $client = null,
+    ) {
+        $this->client ??= new QdrantClient;
+    }
+
     public function consume(string $text): self
     {
         $response = Prism::structured()
@@ -31,7 +38,7 @@ Each chunk should produce a summary only, suitable for your Prism `summary` sche
             ->asStructured();
 
         foreach ($response->structured as $chunk) {
-            // ProcessSummarizedChunkJob::dispatch($chunk['summary']);
+            ProcessSummarizedChunkJob::dispatch($chunk['summary']);
         }
 
         return $this;
@@ -40,6 +47,13 @@ Each chunk should produce a summary only, suitable for your Prism `summary` sche
     public function summarize(): string
     {
         return 'Summary';
+    }
+
+    public function upsert(string $collection, array $points): array
+    {
+        return $this->client->post("/collections/{$collection}/points", [
+            'points' => $points,
+        ]);
     }
 
     protected function getSchema(): ArraySchema
