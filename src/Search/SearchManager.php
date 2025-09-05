@@ -13,7 +13,7 @@ class SearchManager
     public function similar(array $vector, int $top = 5): array
     {
         $response = $this->client->post(
-            path: '/collections/pdf_chunks/points/search',
+            path: '/collections/ember/points/search',
             data: [
                 'vector' => $vector,
                 'top' => $top,

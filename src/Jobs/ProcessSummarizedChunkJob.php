@@ -25,7 +25,7 @@ class ProcessSummarizedChunkJob implements ShouldQueue
             throw $e;
         }
 
-        Ember::memory()->upsert('pdf_chunks', [[
+        Ember::memory()->upsert('ember', [[
             'id' => Uuid::uuid4()->toString(),
             'vector' => $embedding,
             'payload' => [

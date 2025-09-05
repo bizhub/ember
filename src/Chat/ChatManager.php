@@ -7,6 +7,7 @@ use Bizhub\Ember\Enums\ConversationRole;
 use Bizhub\Ember\Models\ConversationMessage;
 use Bizhub\Ember\Search\SearchManager;
 use Domain\Ember\Data\ChatMessage;
+use Illuminate\Support\Facades\View;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Prism;
 use Ramsey\Uuid\Uuid;
@@ -30,6 +31,17 @@ class ChatManager
         return $this;
     }
 
+    public function withSystemPromptView(string $view, array $data = []): self
+    {
+        return $this->withSystemPrompt(function (string $context) use ($view, $data) {
+            $payload = array_merge($data, [
+                'context' => $context ?: 'No relevant knowledge found — answer from general knowledge and conversation so far.',
+            ]);
+
+            return View::make($view, $payload)->render();
+        });
+    }
+
     protected function resolveSystemPrompt(string $context, array $history = []): string
     {
         if (is_callable($this->systemPrompt)) {
@@ -37,8 +49,8 @@ class ChatManager
         } elseif ($this->systemPrompt) {
             $systemPrompt = str_replace(
                 '{context}',
-                $context ?: 'No relevant knowledge found.',
-                $this->systemPrompt
+                $context ?: 'No relevant knowledge found — answer from general knowledge and conversation so far.',
+                $this->systemPrompt,
             );
         } else {
             $systemPrompt = $context ?: 'No relevant knowledge found.';
